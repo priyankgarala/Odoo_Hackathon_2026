@@ -17,6 +17,8 @@ export async function getVehicles(filters?: { status?: VehicleStatus; type?: str
   return data;
 }
 
+export async function getAvailableVehicles() { const { data } = await api.get<Vehicle[]>("/vehicles/available"); return data; }
+
 export async function createVehicle(payload: VehiclePayload) {
   const { data } = await api.post<Vehicle>("/vehicles", payload);
   return data;

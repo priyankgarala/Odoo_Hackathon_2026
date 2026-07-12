@@ -45,6 +45,51 @@ export const VEHICLE_STATUS_LABELS: Record<VehicleStatus, string> = {
   RETIRED: "Retired",
 };
 
+export type DriverStatus = "AVAILABLE" | "ON_TRIP" | "OFF_DUTY" | "SUSPENDED";
+
+export interface Driver {
+  id: string;
+  name: string;
+  licenseNumber: string;
+  licenseCategory: string;
+  licenseExpiry: string;
+  contactNumber: string;
+  safetyScore: number;
+  status: DriverStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const DRIVER_STATUS_LABELS: Record<DriverStatus, string> = {
+  AVAILABLE: "Available",
+  ON_TRIP: "On Trip",
+  OFF_DUTY: "Off Duty",
+  SUSPENDED: "Suspended",
+};
+
+export type TripStatus = "DRAFT" | "DISPATCHED" | "COMPLETED" | "CANCELLED";
+
+export interface Trip {
+  id: string;
+  source: string;
+  destination: string;
+  cargoWeight: number;
+  plannedDistance: number;
+  status: TripStatus;
+  finalOdometer: number | null;
+  fuelConsumed: number | null;
+  revenue: number | null;
+  dispatchedAt: string | null;
+  completedAt: string | null;
+  createdAt: string;
+  vehicle: Vehicle;
+  driver: Driver;
+}
+
+export const TRIP_STATUS_LABELS: Record<TripStatus, string> = {
+  DRAFT: "Draft", DISPATCHED: "Dispatched", COMPLETED: "Completed", CANCELLED: "Cancelled",
+};
+
 export const ROLE_LABELS: Record<Role, string> = {
   FLEET_MANAGER: "Fleet Manager",
   DRIVER: "Driver",
