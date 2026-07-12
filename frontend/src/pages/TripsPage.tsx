@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, X } from "lucide-react";
+import { CheckCircle2, MapPin, X } from "lucide-react";
 import toast from "react-hot-toast";
 import { getAvailableDrivers } from "@/api/drivers";
 import { cancelTrip, completeTrip, createTrip, dispatchTrip, getTrips, type CompleteTripPayload, type TripPayload } from "@/api/trips";
@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { TRIP_STATUS_LABELS, type Trip, type TripStatus } from "@/types";
 import { useOperationsRealtime } from "@/hooks/useOperationsRealtime";
+import { socket } from "@/lib/socket";
 
 const statuses: TripStatus[] = ["DRAFT", "DISPATCHED", "COMPLETED", "CANCELLED"];
 const emptyTrip: TripPayload = { source: "", destination: "", cargoWeight: 0, plannedDistance: 0, vehicleId: "", driverId: "" };
@@ -34,6 +35,18 @@ export function TripsPage() {
   useOperationsRealtime();
   const queryClient = useQueryClient(); 
   const [completing, setCompleting] = useState<Trip | null>(null);
+  const [locations, setLocations] = useState<Record<string, string>>({});
+  
+  useEffect(() => {
+    const handleLocationUpdate = (payload: { tripId: string, location: string }) => {
+      setLocations(prev => ({ ...prev, [payload.tripId]: payload.location }));
+    };
+    
+    socket.on("driver:location:updated", handleLocationUpdate);
+    return () => {
+      socket.off("driver:location:updated", handleLocationUpdate);
+    };
+  }, []);
   
   const { data: trips = [], isLoading } = useQuery({ queryKey: ["trips"], queryFn: () => getTrips() }); 
   const { data: vehicles = [] } = useQuery({ queryKey: ["available-vehicles"], queryFn: getAvailableVehicles }); 
@@ -241,6 +254,12 @@ export function TripsPage() {
                     <div>
                       <TripBadge status={trip.status} />
                     </div>
+                    {locations[trip.id] && trip.status === "DISPATCHED" && (
+                      <div className="flex items-center gap-1.5 text-sm font-medium text-blue-600 mt-2">
+                        <MapPin className="h-4 w-4" />
+                        {locations[trip.id]}
+                      </div>
+                    )}
                   </div>
                   
                   <div className="flex flex-col sm:items-end justify-between gap-3 text-sm">
@@ -273,12 +292,6 @@ export function TripsPage() {
                 </div>
               ))
             )}
-          </div>
-          
-          <div className="pt-2">
-            <p className="text-sm font-medium text-orange-600 dark:text-orange-400">
-              On Complete, odometer &rarr; fuel log &rarr; expenses &rarr; vehicle &amp; driver available
-            </p>
           </div>
         </div>
       </div>

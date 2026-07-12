@@ -160,16 +160,6 @@ export function LoginPage() {
               {isSubmitting ? "Signing in..." : "Sign In"}
             </Button>
           </form>
-          
-          <div className="mt-12 space-y-3 border-t border-slate-800 pt-8 text-sm">
-            <p className="font-medium text-slate-300">Access is scoped by role after login:</p>
-            <ul className="space-y-2 text-slate-400">
-              <li><span className="text-white font-medium">• Fleet Manager</span> &rarr; Full Admin, Everything</li>
-              <li><span className="text-white font-medium">• Driver</span> &rarr; My Trips, Dispatches</li>
-              <li><span className="text-white font-medium">• Safety Officer</span> &rarr; Drivers, Compliance</li>
-              <li><span className="text-white font-medium">• Financial Analyst</span> &rarr; Fuel & Expense, Analytics</li>
-            </ul>
-          </div>
         </div>
       </section>
     </div>

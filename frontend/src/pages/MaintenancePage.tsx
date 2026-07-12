@@ -92,29 +92,6 @@ export function MaintenancePage() {
             </Button>
           </form>
 
-          <div className="pt-6 space-y-4">
-            <div className="space-y-3">
-              <div className="flex items-center gap-4 text-sm font-semibold text-emerald-600 dark:text-emerald-500">
-                <span className="w-20">Available</span>
-                <div className="flex-1 flex items-center">
-                  <div className="h-px bg-current flex-1"></div>
-                  <ArrowRight className="h-4 w-4 -ml-1" />
-                </div>
-                <span className="w-20 text-orange-600 dark:text-orange-400">In Shop</span>
-              </div>
-              <div className="flex items-center gap-4 text-sm font-semibold text-orange-600 dark:text-orange-400">
-                <span className="w-20">In Shop</span>
-                <div className="flex-1 flex items-center">
-                  <div className="h-px bg-current flex-1"></div>
-                  <ArrowRight className="h-4 w-4 -ml-1" />
-                </div>
-                <span className="w-20 text-emerald-600 dark:text-emerald-500">Available</span>
-              </div>
-            </div>
-            <p className="text-sm font-medium text-orange-600 dark:text-orange-400 pt-2">
-              Note: In Shop vehicles are removed from the dispatch pool.
-            </p>
-          </div>
         </div>
 
         {/* Right Column: SERVICE LOG */}

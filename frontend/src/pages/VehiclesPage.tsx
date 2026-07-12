@@ -161,12 +161,6 @@ export function VehiclesPage() {
           </table>
         </div>
       </div>
-
-      <div className="pt-2">
-        <p className="text-sm font-medium text-orange-500">
-          Note: Registration can only be done by Admin. Status will be synced from Trip Dispatcher...
-        </p>
-      </div>
     </div>
   );
 }

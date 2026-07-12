@@ -26,6 +26,16 @@ export function initializeSocketServer(server: HttpServer) {
     const user = socket.data.user as SocketUser;
     socket.join(`user:${user.id}`);
     socket.join(`role:${user.role}`);
+
+    socket.on("driver:location:update", (payload: { tripId: string; location: string }) => {
+      // Broadcast to all fleet managers (or globally to the namespace)
+      io?.emit("driver:location:updated", {
+        driverId: user.id,
+        tripId: payload.tripId,
+        location: payload.location,
+        updatedAt: new Date().toISOString()
+      });
+    });
   });
   return io;
 }
