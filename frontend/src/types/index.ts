@@ -105,6 +105,9 @@ export type ExpenseType = "TOLL" | "MAINTENANCE" | "OTHER";
 export interface FuelLog { id: string; vehicleId: string; liters: number; cost: number; date: string; vehicle: Vehicle; }
 export interface Expense { id: string; vehicleId: string; type: ExpenseType; amount: number; date: string; description: string | null; vehicle: Vehicle; }
 
+export interface VehicleAnalytics { vehicleId: string; registrationNumber: string; name: string; fuelEfficiency: number; operationalCost: number; roi: number; totalDistance: number; totalRevenue: number; }
+export interface AnalyticsReport { fleetSummary: { avgFuelEfficiency: number; totalOperationalCost: number; vehicleCount: number }; vehicles: VehicleAnalytics[]; }
+
 export const ROLE_LABELS: Record<Role, string> = {
   FLEET_MANAGER: "Fleet Manager",
   DRIVER: "Driver",

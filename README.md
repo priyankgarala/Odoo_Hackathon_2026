@@ -58,15 +58,6 @@ npm run dev
 
 App runs at `http://localhost:5173`
 
-## First User
-
-Register via API before logging into the UI:
-
-```bash
-curl -X POST http://localhost:5000/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"email":"admin@transitops.com","password":"password123","name":"Fleet Admin","role":"FLEET_MANAGER"}'
-```
 
 ## Roles
 
