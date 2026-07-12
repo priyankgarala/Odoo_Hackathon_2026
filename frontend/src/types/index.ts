@@ -45,6 +45,9 @@ export const VEHICLE_STATUS_LABELS: Record<VehicleStatus, string> = {
   RETIRED: "Retired",
 };
 
+export const VEHICLE_TYPES = ["Van", "Truck", "Trailer", "Bus", "Two-Wheeler"] as const;
+export const REGIONS = ["North", "South", "East", "West", "Central"] as const;
+
 export type DriverStatus = "AVAILABLE" | "ON_TRIP" | "OFF_DUTY" | "SUSPENDED";
 
 export interface Driver {

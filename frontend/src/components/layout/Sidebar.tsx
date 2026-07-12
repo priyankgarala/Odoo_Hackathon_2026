@@ -20,6 +20,7 @@ const navItems = [
   { to: "/vehicles", label: "Vehicles", icon: Bus, roles: ["FLEET_MANAGER"] as const },
   { to: "/drivers", label: "Drivers", icon: Users, roles: ["SAFETY_OFFICER", "FLEET_MANAGER"] as const },
   { to: "/trips", label: "Trips", icon: Route, roles: ["DRIVER", "FLEET_MANAGER"] as const },
+  { to: "/my-trips", label: "My Trips", icon: Route, roles: ["DRIVER"] as const },
   { to: "/maintenance", label: "Maintenance", icon: Wrench, roles: ["FLEET_MANAGER"] as const },
   { to: "/fuel-expenses", label: "Fuel & Expenses", icon: Fuel, roles: ["FINANCIAL_ANALYST", "FLEET_MANAGER"] as const },
   { to: "/reports", label: "Reports", icon: BarChart3, roles: ["FINANCIAL_ANALYST", "FLEET_MANAGER"] as const },

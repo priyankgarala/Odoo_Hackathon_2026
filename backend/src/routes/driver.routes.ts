@@ -12,6 +12,15 @@ router.use(authenticate);
 
 router.get("/", driverController.list);
 router.get("/available", driverController.listAvailable);
+router.post(
+  "/onboard",
+  authorize(Role.FLEET_MANAGER),
+  validate([
+    body("name").notEmpty(), body("email").isEmail(), body("password").isLength({ min: 8 }), body("licenseNumber").notEmpty(), body("licenseCategory").notEmpty(), body("licenseExpiry").isISO8601(), body("contactNumber").notEmpty(),
+  ]),
+  driverController.onboard,
+);
+
 router.get("/:id", driverController.getById);
 
 router.post(

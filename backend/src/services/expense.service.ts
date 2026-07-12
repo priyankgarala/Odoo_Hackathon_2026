@@ -35,7 +35,7 @@ export async function createExpense(data: {
 }
 
 export async function getVehicleOperationalCost(vehicleId: string) {
-  const [fuelAgg, maintenanceAgg, expenseAgg] = await Promise.all([
+  const [fuelAgg, maintenanceAgg, maintenanceExpenseAgg, otherExpenseAgg] = await Promise.all([
     prisma.fuelLog.aggregate({
       where: { vehicleId },
       _sum: { cost: true },
@@ -45,19 +45,23 @@ export async function getVehicleOperationalCost(vehicleId: string) {
       _sum: { cost: true },
     }),
     prisma.expense.aggregate({
-      where: { vehicleId },
+      where: { vehicleId, type: ExpenseType.MAINTENANCE },
+      _sum: { amount: true },
+    }),
+    prisma.expense.aggregate({
+      where: { vehicleId, type: { in: [ExpenseType.TOLL, ExpenseType.OTHER] } },
       _sum: { amount: true },
     }),
   ]);
 
   const fuelCost = fuelAgg._sum.cost ?? 0;
-  const maintenanceCost = maintenanceAgg._sum.cost ?? 0;
-  const otherExpenses = expenseAgg._sum.amount ?? 0;
+  const maintenanceCost = (maintenanceAgg._sum.cost ?? 0) + (maintenanceExpenseAgg._sum.amount ?? 0);
+  const otherExpenses = otherExpenseAgg._sum.amount ?? 0;
 
   return {
     fuelCost,
     maintenanceCost,
     otherExpenses,
-    totalOperationalCost: fuelCost + maintenanceCost + otherExpenses,
+    totalOperationalCost: fuelCost + maintenanceCost,
   };
 }

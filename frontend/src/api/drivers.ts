@@ -23,6 +23,8 @@ export async function createDriver(payload: DriverPayload) {
   return data;
 }
 
+export async function onboardDriver(payload: DriverPayload & { email: string; password: string }) { const { data } = await api.post<Driver>("/drivers/onboard", payload); return data; }
+
 export async function updateDriver(id: string, payload: Partial<DriverPayload>) {
   const { data } = await api.put<Driver>(`/drivers/${id}`, payload);
   return data;

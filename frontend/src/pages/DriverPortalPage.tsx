@@ -1,0 +1,13 @@
+import { useQuery } from "@tanstack/react-query";
+import { MapPin, Route, Truck } from "lucide-react";
+import { api } from "@/api/client";
+import { Card, CardContent } from "@/components/ui/card";
+import { useOperationsRealtime } from "@/hooks/useOperationsRealtime";
+import type { Trip } from "@/types";
+
+async function getMyTrips() { const { data } = await api.get<Trip[]>("/trips/mine"); return data; }
+export function DriverPortalPage() {
+  useOperationsRealtime(); const { data: trips = [], isLoading, error } = useQuery({ queryKey: ["my-trips"], queryFn: getMyTrips }); const active = trips.find((trip) => trip.status === "DISPATCHED");
+  if (error) return <div className="rounded-xl border border-amber-200 bg-amber-50 p-5 text-amber-800">Your account is not linked to a driver profile yet. Ask a Fleet Manager to link it before using the driver portal.</div>;
+  return <div className="space-y-6"><div><p className="text-sm font-medium text-primary">Driver workspace</p><h2 className="mt-1 text-3xl font-bold tracking-tight">My trips</h2><p className="mt-1 text-muted-foreground">Your assigned routes update live as they are dispatched.</p></div>{active ? <Card className="border-blue-200 bg-blue-50/50"><CardContent className="p-6"><p className="text-sm font-medium text-blue-700">Active delivery</p><h3 className="mt-2 flex items-center gap-2 text-xl font-bold"><MapPin className="h-5 w-5 text-primary" />{active.source} → {active.destination}</h3><div className="mt-5 grid gap-4 sm:grid-cols-3"><p><span className="text-sm text-muted-foreground">Vehicle</span><br />{active.vehicle.name}</p><p><span className="text-sm text-muted-foreground">Cargo</span><br />{active.cargoWeight} kg</p><p><span className="text-sm text-muted-foreground">Distance</span><br />{active.plannedDistance} km</p></div></CardContent></Card> : <Card><CardContent className="flex items-center gap-3 p-6 text-muted-foreground"><Truck className="h-5 w-5" />No active trip assigned.</CardContent></Card>}<Card><CardContent className="pt-6"><h3 className="mb-4 font-semibold">Trip history</h3>{isLoading ? <p className="text-sm text-muted-foreground">Loading your trips...</p> : <div className="space-y-3">{trips.map((trip) => <div key={trip.id} className="flex items-center justify-between rounded-lg border p-4"><span className="flex items-center gap-2 font-medium"><Route className="h-4 w-4 text-primary" />{trip.source} → {trip.destination}</span><span className="text-sm text-muted-foreground">{trip.status}</span></div>)}{trips.length === 0 && <p className="text-sm text-muted-foreground">No trips assigned yet.</p>}</div>}</CardContent></Card></div>;
+}

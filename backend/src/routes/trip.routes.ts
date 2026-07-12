@@ -10,12 +10,13 @@ const router = Router();
 
 router.use(authenticate);
 
-router.get("/", tripController.list);
-router.get("/:id", tripController.getById);
+router.get("/", authorize(Role.FLEET_MANAGER), tripController.list);
+router.get("/mine", authorize(Role.DRIVER), tripController.listMine);
+router.get("/:id", authorize(Role.FLEET_MANAGER), tripController.getById);
 
 router.post(
   "/",
-  authorize(Role.DRIVER, Role.FLEET_MANAGER),
+  authorize(Role.FLEET_MANAGER),
   validate([
     body("source").notEmpty().withMessage("Source is required"),
     body("destination").notEmpty().withMessage("Destination is required"),
@@ -29,13 +30,13 @@ router.post(
 
 router.patch(
   "/:id/dispatch",
-  authorize(Role.DRIVER, Role.FLEET_MANAGER),
+  authorize(Role.FLEET_MANAGER),
   tripController.dispatch,
 );
 
 router.patch(
   "/:id/complete",
-  authorize(Role.DRIVER, Role.FLEET_MANAGER),
+  authorize(Role.FLEET_MANAGER),
   validate([
     body("finalOdometer").isFloat({ min: 0 }).withMessage("Valid final odometer required"),
     body("fuelConsumed").isFloat({ min: 0 }).withMessage("Valid fuel consumed required"),
@@ -45,7 +46,7 @@ router.patch(
 
 router.patch(
   "/:id/cancel",
-  authorize(Role.DRIVER, Role.FLEET_MANAGER),
+  authorize(Role.FLEET_MANAGER),
   tripController.cancel,
 );
 

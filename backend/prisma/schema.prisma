@@ -55,6 +55,7 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   trips        Trip[]   @relation("TripCreator")
+  driverProfile Driver?
 }
 
 model Vehicle {
@@ -84,9 +85,11 @@ model Driver {
   contactNumber   String
   safetyScore     Float        @default(100)
   status          DriverStatus @default(AVAILABLE)
+  userId          String?      @unique
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
   trips           Trip[]
+  user            User?        @relation(fields: [userId], references: [id])
 }
 
 model Trip {

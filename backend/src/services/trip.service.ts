@@ -54,6 +54,12 @@ export async function listTrips(filters?: { status?: TripStatus }) {
   });
 }
 
+export async function listMyTrips(userId: string) {
+  const driver = await prisma.driver.findUnique({ where: { userId } });
+  if (!driver) throw new AppError(404, "No driver profile is linked to this account");
+  return prisma.trip.findMany({ where: { driverId: driver.id }, include: { vehicle: true, driver: true }, orderBy: { createdAt: "desc" } });
+}
+
 export async function getTripById(id: string) {
   const trip = await prisma.trip.findUnique({
     where: { id },

@@ -10,6 +10,7 @@ import { TripsPage } from "@/pages/TripsPage";
 import { MaintenancePage } from "@/pages/MaintenancePage";
 import { FuelExpensesPage } from "@/pages/FuelExpensesPage";
 import { ReportsPage } from "@/pages/ReportsPage";
+import { DriverPortalPage } from "@/pages/DriverPortalPage";
 
 export function AppRoutes() {
   return (
@@ -40,11 +41,12 @@ export function AppRoutes() {
           <Route
             path="trips"
             element={
-              <RoleGuard roles={["DRIVER", "FLEET_MANAGER"]}>
+              <RoleGuard roles={["FLEET_MANAGER"]}>
                 <TripsPage />
               </RoleGuard>
             }
           />
+          <Route path="my-trips" element={<RoleGuard roles={["DRIVER"]}><DriverPortalPage /></RoleGuard>} />
           <Route
             path="maintenance"
             element={

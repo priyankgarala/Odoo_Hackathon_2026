@@ -54,7 +54,15 @@ export async function updateVehicle(
     region: string;
   }>,
 ) {
-  await getVehicleById(id);
+  const vehicle = await getVehicleById(id);
+  if (data.status && data.status !== vehicle.status) {
+    if (vehicle.status === VehicleStatus.ON_TRIP || vehicle.status === VehicleStatus.IN_SHOP) {
+      throw new AppError(400, "Vehicle status is controlled by trip and maintenance workflows");
+    }
+    if (data.status !== VehicleStatus.RETIRED) {
+      throw new AppError(400, "Only available vehicles can be retired manually");
+    }
+  }
   return prisma.vehicle.update({ where: { id }, data });
 }
 

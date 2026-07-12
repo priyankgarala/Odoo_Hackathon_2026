@@ -43,6 +43,10 @@ export async function create(req: Request, res: Response, next: NextFunction) {
   }
 }
 
+export async function onboard(req: Request, res: Response, next: NextFunction) {
+  try { const driver = await driverService.onboardDriver({ ...req.body, licenseExpiry: new Date(req.body.licenseExpiry) }); res.status(201).json(driver); } catch (err) { next(err); }
+}
+
 export async function update(req: Request, res: Response, next: NextFunction) {
   try {
     const data = { ...req.body };

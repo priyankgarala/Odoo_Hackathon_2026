@@ -13,6 +13,10 @@ export async function list(req: Request, res: Response, next: NextFunction) {
   }
 }
 
+export async function listMine(req: Request, res: Response, next: NextFunction) {
+  try { res.json(await tripService.listMyTrips(req.user!.id)); } catch (err) { next(err); }
+}
+
 export async function getById(req: Request, res: Response, next: NextFunction) {
   try {
     const trip = await tripService.getTripById(req.params.id as string);
