@@ -40,7 +40,7 @@ export function ReportsPage() {
   return (
     <div className="space-y-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-3xl font-bold tracking-tight">7. Reports & Analytics</h1>
+        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 border-l-4 border-orange-500 pl-4">Reports & Analytics</h1>
         <Button onClick={exportCsv} className="bg-blue-500 hover:bg-blue-600 text-white rounded-full px-6 shadow-md transition-colors" size="lg">
           Export CSV
         </Button>

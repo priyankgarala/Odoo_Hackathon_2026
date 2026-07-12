@@ -51,7 +51,7 @@ export function MaintenancePage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold tracking-tight">5. Maintenance</h1>
+      <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 border-l-4 border-orange-500 pl-4">Maintenance</h1>
       
       <div className="grid gap-8 lg:grid-cols-[400px_1fr]">
         

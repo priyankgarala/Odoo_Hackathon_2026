@@ -60,7 +60,7 @@ export function FuelExpensesPage() {
   return (
     <div className="space-y-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-3xl font-bold tracking-tight">6. Fuel & Expense Management</h1>
+        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 border-l-4 border-orange-500 pl-4">Fuel & Expense Management</h1>
         <div className="flex gap-3">
           <Button onClick={() => setMode("fuel")} className="bg-orange-500 hover:bg-orange-600 text-white rounded-md px-6 shadow-md transition-colors" size="lg">
             <Plus className="mr-2 h-4 w-4" /> Log Fuel

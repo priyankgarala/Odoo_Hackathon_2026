@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -9,7 +8,6 @@ import { useAuth } from "@/providers/AuthProvider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ROLE_LABELS, type Role } from "@/types";
 
 const loginSchema = z.object({
   email: z.string().email("Enter a valid email"),
@@ -18,12 +16,9 @@ const loginSchema = z.object({
 
 type LoginForm = z.infer<typeof loginSchema>;
 
-const roles: Role[] = ["FLEET_MANAGER", "DRIVER", "SAFETY_OFFICER", "FINANCIAL_ANALYST"];
-
 export function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
-  const [selectedRole, setSelectedRole] = useState<Role>("FLEET_MANAGER");
 
   const {
     register,
@@ -44,21 +39,6 @@ export function LoginPage() {
     }
   };
   
-  const handleRoleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const role = e.target.value as Role;
-    setSelectedRole(role);
-    
-    // Auto-fill demo credentials based on role
-    const demoEmails: Record<Role, string> = {
-      FLEET_MANAGER: "manager@transitops.com",
-      DRIVER: "driver@transitops.com",
-      SAFETY_OFFICER: "safety@transitops.com",
-      FINANCIAL_ANALYST: "finance@transitops.com"
-    };
-    
-    setValue("email", demoEmails[role]);
-    setValue("password", "password123");
-  };
 
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
@@ -128,20 +108,6 @@ export function LoginPage() {
                 {...register("password")} 
               />
               {errors.password && <p className="text-xs font-medium text-red-500">{errors.password.message}</p>}
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="role" className="text-xs font-bold uppercase tracking-wider text-slate-400">SELECT ROLE</Label>
-              <select 
-                id="role"
-                className="flex h-12 w-full rounded-md border border-slate-800 bg-slate-900 px-3 py-2 text-sm text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950" 
-                value={selectedRole}
-                onChange={handleRoleChange}
-              >
-                {roles.map((r) => (
-                  <option key={r} value={r}>{ROLE_LABELS[r]}</option>
-                ))}
-              </select>
             </div>
             
             <div className="flex items-center justify-between py-2">

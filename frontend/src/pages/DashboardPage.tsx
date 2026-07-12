@@ -49,7 +49,7 @@ export function DashboardPage() {
   const kpiCards = [
     { key: "activeVehicles", label: "Active Vehicles", color: "border-t-blue-500" },
     { key: "availableVehicles", label: "Available Vehicles", color: "border-t-emerald-500" },
-    { key: "vehiclesInMaintenance", label: "Vehicles in Maint.", color: "border-t-orange-500" },
+    { key: "vehiclesInMaintenance", label: "Vehicles in Maintenance", color: "border-t-orange-500" },
     { key: "activeTrips", label: "Active Trips", color: "border-t-indigo-500" },
     { key: "pendingTrips", label: "Pending Trips", color: "border-t-red-500" },
     { key: "driversOnDuty", label: "Drivers on Duty", color: "border-t-cyan-500" },
@@ -58,7 +58,7 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold tracking-tight">1. Dashboard</h1>
+      <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 border-l-4 border-orange-500 pl-4">Dashboard</h1>
       
       <div className="flex flex-wrap gap-4">
         <select className="flex h-11 w-48 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" value={type} onChange={(event) => setType(event.target.value)}>
