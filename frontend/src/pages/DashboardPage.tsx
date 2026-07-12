@@ -4,6 +4,7 @@ import { Activity, Bus, CircleCheck, Gauge, Route, Users, Wrench } from "lucide-
 import { getDashboardKpis } from "@/api/dashboard";
 import { Card, CardContent } from "@/components/ui/card";
 import type { VehicleStatus } from "@/types";
+import { useOperationsRealtime } from "@/hooks/useOperationsRealtime";
 
 const statusOptions: { value: "" | VehicleStatus; label: string }[] = [{ value: "", label: "All statuses" }, { value: "AVAILABLE", label: "Available" }, { value: "ON_TRIP", label: "On trip" }, { value: "IN_SHOP", label: "In shop" }, { value: "RETIRED", label: "Retired" }];
 const cards = [
@@ -11,6 +12,7 @@ const cards = [
 ] as const;
 
 export function DashboardPage() {
+  useOperationsRealtime();
   const [status, setStatus] = useState<"" | VehicleStatus>("");
   const [region, setRegion] = useState("");
   const { data: kpis, isLoading } = useQuery({ queryKey: ["dashboard-kpis", status, region], queryFn: () => getDashboardKpis({ status: status || undefined, region: region || undefined }) });

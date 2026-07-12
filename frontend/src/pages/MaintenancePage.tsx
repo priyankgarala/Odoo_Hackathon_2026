@@ -1,13 +1,28 @@
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { CheckCircle2, Plus, Wrench, X } from "lucide-react";
+import toast from "react-hot-toast";
+import { createMaintenanceLog, closeMaintenanceLog, getMaintenanceLogs, type MaintenancePayload } from "@/api/maintenance";
+import { getVehicles } from "@/api/vehicles";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useOperationsRealtime } from "@/hooks/useOperationsRealtime";
+
+const emptyLog: MaintenancePayload = { vehicleId: "", description: "", cost: 0, date: new Date().toISOString().slice(0, 10) };
 export function MaintenancePage() {
-  return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">Maintenance</h2>
-        <p className="text-muted-foreground">Log repairs and manage vehicle shop status</p>
-      </div>
-      <p className="text-sm text-muted-foreground">
-        Creating a log sets vehicle to In Shop. API: <code>/api/maintenance</code>
-      </p>
-    </div>
-  );
+  useOperationsRealtime();
+  const queryClient = useQueryClient(); const [showForm, setShowForm] = useState(false); const form = useForm<MaintenancePayload>({ defaultValues: emptyLog });
+  const { data: logs = [], isLoading } = useQuery({ queryKey: ["maintenance"], queryFn: () => getMaintenanceLogs() }); const { data: vehicles = [] } = useQuery({ queryKey: ["maintenance-vehicles"], queryFn: () => getVehicles() });
+  const refresh = () => { queryClient.invalidateQueries({ queryKey: ["maintenance"] }); queryClient.invalidateQueries({ queryKey: ["vehicles"] }); queryClient.invalidateQueries({ queryKey: ["maintenance-vehicles"] }); queryClient.invalidateQueries({ queryKey: ["dashboard-kpis"] }); };
+  const create = useMutation({ mutationFn: createMaintenanceLog, onSuccess: () => { toast.success("Maintenance log opened; vehicle is now in shop"); setShowForm(false); form.reset(emptyLog); refresh(); }, onError: (e) => toast.error(e instanceof Error ? e.message : "Unable to open maintenance log") }); const close = useMutation({ mutationFn: closeMaintenanceLog, onSuccess: () => { toast.success("Maintenance log closed"); refresh(); }, onError: (e) => toast.error(e instanceof Error ? e.message : "Unable to close maintenance log") });
+  const maintenanceEligible = vehicles.filter((vehicle) => vehicle.status !== "RETIRED" && vehicle.status !== "ON_TRIP");
+  return <div className="space-y-6"><div className="flex flex-wrap items-start justify-between gap-4"><div><p className="text-sm font-medium text-primary">Fleet care</p><h2 className="mt-1 text-3xl font-bold tracking-tight">Maintenance</h2><p className="mt-1 text-muted-foreground">Log repairs, protect dispatch availability, and track workshop costs.</p></div><Button onClick={() => setShowForm(true)}><Plus className="h-4 w-4" /> Log maintenance</Button></div>
+    {showForm && <Card><CardContent className="pt-6"><div className="mb-5 flex items-center justify-between"><div><h3 className="font-semibold">New maintenance log</h3><p className="text-sm text-muted-foreground">Opening a log immediately moves the vehicle into the shop.</p></div><Button size="sm" variant="ghost" onClick={() => setShowForm(false)}><X className="h-4 w-4" /></Button></div><form className="grid gap-4 md:grid-cols-2 lg:grid-cols-3" onSubmit={form.handleSubmit((data) => create.mutate({ ...data, cost: Number(data.cost) }))}><Field label="Vehicle" error={form.formState.errors.vehicleId?.message}><select className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" {...form.register("vehicleId", { required: "Select a vehicle" })}><option value="">Select vehicle</option>{maintenanceEligible.map((vehicle) => <option key={vehicle.id} value={vehicle.id}>{vehicle.name} · {vehicle.registrationNumber} ({vehicle.status === "IN_SHOP" ? "in shop" : "available"})</option>)}</select></Field><Field label="Work description" error={form.formState.errors.description?.message}><Input placeholder="Oil change and brake inspection" {...form.register("description", { required: "Required" })} /></Field><Field label="Cost"><Input type="number" min="0" {...form.register("cost", { min: 0 })} /></Field><Field label="Maintenance date"><Input type="date" {...form.register("date")} /></Field><div className="flex items-end gap-3"><Button type="submit" disabled={create.isPending}>{create.isPending ? "Opening..." : "Open maintenance log"}</Button><Button type="button" variant="outline" onClick={() => setShowForm(false)}>Cancel</Button></div></form></CardContent></Card>}
+    <div className="grid gap-4 sm:grid-cols-3"><Metric label="Open work orders" value={logs.filter((log) => log.status === "OPEN").length} /><Metric label="Completed work orders" value={logs.filter((log) => log.status === "CLOSED").length} /><Metric label="Maintenance cost" value={`₹${logs.reduce((sum, log) => sum + log.cost, 0).toLocaleString()}`} /></div>
+    <Card><CardContent className="pt-6"><div className="mb-5"><h3 className="font-semibold">Maintenance log</h3><p className="mt-1 text-sm text-muted-foreground">Vehicles with an open work order are excluded from dispatch.</p></div><div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead className="border-b text-muted-foreground"><tr><th className="p-3">Vehicle</th><th className="p-3">Work order</th><th className="p-3">Date</th><th className="p-3">Cost</th><th className="p-3">Status</th><th className="p-3 text-right">Action</th></tr></thead><tbody>{isLoading ? <tr><td colSpan={6} className="p-6 text-center text-muted-foreground">Loading maintenance logs...</td></tr> : logs.length === 0 ? <tr><td colSpan={6} className="p-6 text-center text-muted-foreground">No maintenance logs yet.</td></tr> : logs.map((log) => <tr key={log.id} className="border-b last:border-0"><td className="p-3"><p className="font-medium">{log.vehicle.name}</p><p className="text-xs text-muted-foreground">{log.vehicle.registrationNumber}</p></td><td className="p-3"><span className="flex items-center gap-2"><Wrench className="h-4 w-4 text-amber-500" />{log.description}</span></td><td className="p-3">{new Date(log.date).toLocaleDateString()}</td><td className="p-3">₹{log.cost.toLocaleString()}</td><td className="p-3"><span className={`rounded-full px-2.5 py-1 text-xs font-medium ${log.status === "OPEN" ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800"}`}>{log.status === "OPEN" ? "Open" : "Closed"}</span></td><td className="p-3 text-right">{log.status === "OPEN" && <Button size="sm" variant="secondary" disabled={close.isPending} onClick={() => close.mutate(log.id)}><CheckCircle2 className="h-3.5 w-3.5" /> Close</Button>}</td></tr>)}</tbody></table></div></CardContent></Card></div>;
 }
+function Metric({ label, value }: { label: string; value: string | number }) { return <Card><CardContent className="flex items-center justify-between p-5"><p className="text-sm text-muted-foreground">{label}</p><p className="text-2xl font-bold">{value}</p></CardContent></Card>; }
+function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) { return <div className="space-y-2"><Label>{label}</Label>{children}{error && <p className="text-xs text-destructive">{error}</p>}</div>; }

@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { VEHICLE_STATUS_LABELS, type Vehicle, type VehicleStatus } from "@/types";
+import { useOperationsRealtime } from "@/hooks/useOperationsRealtime";
 
 const statuses: VehicleStatus[] = ["AVAILABLE", "ON_TRIP", "IN_SHOP", "RETIRED"];
 const emptyVehicle: VehiclePayload = {
@@ -24,6 +25,7 @@ function StatusBadge({ status }: { status: VehicleStatus }) {
 }
 
 export function VehiclesPage() {
+  useOperationsRealtime();
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState<Vehicle | null>(null);
   const [showForm, setShowForm] = useState(false);

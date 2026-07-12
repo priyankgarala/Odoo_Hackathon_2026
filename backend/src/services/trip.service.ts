@@ -5,6 +5,7 @@ import {
 } from "@prisma/client";
 import { prisma } from "../lib/prisma.js";
 import { AppError } from "../middleware/errorHandler.js";
+import { emitOperationsUpdate } from "../lib/socket.js";
 
 async function validateTripAssignment(
   vehicleId: string,
@@ -91,7 +92,7 @@ export async function dispatchTrip(id: string) {
 
   await validateTripAssignment(trip.vehicleId, trip.driverId, trip.cargoWeight);
 
-  return prisma.$transaction(async (tx) => {
+  const updatedTrip = await prisma.$transaction(async (tx) => {
     await tx.vehicle.update({
       where: { id: trip.vehicleId },
       data: { status: VehicleStatus.ON_TRIP },
@@ -107,6 +108,8 @@ export async function dispatchTrip(id: string) {
       include: { vehicle: true, driver: true },
     });
   });
+  emitOperationsUpdate("trip.dispatched", { tripId: updatedTrip.id, vehicleId: updatedTrip.vehicleId, driverId: updatedTrip.driverId });
+  return updatedTrip;
 }
 
 export async function completeTrip(
@@ -119,7 +122,7 @@ export async function completeTrip(
     throw new AppError(400, "Only dispatched trips can be completed");
   }
 
-  return prisma.$transaction(async (tx) => {
+  const updatedTrip = await prisma.$transaction(async (tx) => {
     await tx.vehicle.update({
       where: { id: trip.vehicleId },
       data: {
@@ -144,6 +147,8 @@ export async function completeTrip(
       include: { vehicle: true, driver: true },
     });
   });
+  emitOperationsUpdate("trip.completed", { tripId: updatedTrip.id, vehicleId: updatedTrip.vehicleId, driverId: updatedTrip.driverId });
+  return updatedTrip;
 }
 
 export async function cancelTrip(id: string) {
@@ -157,7 +162,7 @@ export async function cancelTrip(id: string) {
     throw new AppError(400, "Trip is already cancelled");
   }
 
-  return prisma.$transaction(async (tx) => {
+  const updatedTrip = await prisma.$transaction(async (tx) => {
     if (trip.status === TripStatus.DISPATCHED) {
       await tx.vehicle.update({
         where: { id: trip.vehicleId },
@@ -175,4 +180,6 @@ export async function cancelTrip(id: string) {
       include: { vehicle: true, driver: true },
     });
   });
+  emitOperationsUpdate("trip.cancelled", { tripId: updatedTrip.id, vehicleId: updatedTrip.vehicleId, driverId: updatedTrip.driverId });
+  return updatedTrip;
 }

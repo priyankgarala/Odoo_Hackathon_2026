@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DRIVER_STATUS_LABELS, type Driver, type DriverStatus } from "@/types";
+import { useOperationsRealtime } from "@/hooks/useOperationsRealtime";
 
 const statuses: DriverStatus[] = ["AVAILABLE", "ON_TRIP", "OFF_DUTY", "SUSPENDED"];
 const emptyDriver: DriverPayload = { name: "", licenseNumber: "", licenseCategory: "", licenseExpiry: "", contactNumber: "", safetyScore: 100 };
@@ -17,6 +18,7 @@ function daysUntil(date: string) { return Math.ceil((new Date(date).getTime() - 
 function DriverBadge({ status }: { status: DriverStatus }) { const colors: Record<DriverStatus, string> = { AVAILABLE: "bg-emerald-100 text-emerald-800", ON_TRIP: "bg-blue-100 text-blue-800", OFF_DUTY: "bg-slate-100 text-slate-700", SUSPENDED: "bg-red-100 text-red-700" }; return <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${colors[status]}`}>{DRIVER_STATUS_LABELS[status]}</span>; }
 
 export function DriversPage() {
+  useOperationsRealtime();
   const queryClient = useQueryClient(); const [editing, setEditing] = useState<Driver | null>(null); const [showForm, setShowForm] = useState(false); const [statusFilter, setStatusFilter] = useState<"" | DriverStatus>(""); const [search, setSearch] = useState("");
   const { data: drivers = [], isLoading } = useQuery({ queryKey: ["drivers", statusFilter], queryFn: () => getDrivers(statusFilter ? { status: statusFilter } : undefined) });
   const form = useForm<DriverPayload>({ defaultValues: emptyDriver }); const refresh = () => queryClient.invalidateQueries({ queryKey: ["drivers"] });

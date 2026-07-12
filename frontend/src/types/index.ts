@@ -90,6 +90,17 @@ export const TRIP_STATUS_LABELS: Record<TripStatus, string> = {
   DRAFT: "Draft", DISPATCHED: "Dispatched", COMPLETED: "Completed", CANCELLED: "Cancelled",
 };
 
+export type MaintenanceStatus = "OPEN" | "CLOSED";
+export interface MaintenanceLog {
+  id: string;
+  vehicleId: string;
+  description: string;
+  cost: number;
+  date: string;
+  status: MaintenanceStatus;
+  vehicle: Vehicle;
+}
+
 export const ROLE_LABELS: Record<Role, string> = {
   FLEET_MANAGER: "Fleet Manager",
   DRIVER: "Driver",

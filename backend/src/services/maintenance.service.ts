@@ -2,6 +2,7 @@ import { MaintenanceStatus, VehicleStatus } from "@prisma/client";
 import { prisma } from "../lib/prisma.js";
 import { AppError } from "../middleware/errorHandler.js";
 import { getVehicleById } from "./vehicle.service.js";
+import { emitOperationsUpdate } from "../lib/socket.js";
 
 export async function listMaintenanceLogs(vehicleId?: string) {
   return prisma.maintenanceLog.findMany({
@@ -22,8 +23,11 @@ export async function createMaintenanceLog(data: {
   if (vehicle.status === VehicleStatus.RETIRED) {
     throw new AppError(400, "Cannot create maintenance for retired vehicles");
   }
+  if (vehicle.status === VehicleStatus.ON_TRIP) {
+    throw new AppError(400, "Cannot place a vehicle on maintenance while it is on a trip");
+  }
 
-  return prisma.$transaction(async (tx) => {
+  const log = await prisma.$transaction(async (tx) => {
     await tx.vehicle.update({
       where: { id: data.vehicleId },
       data: { status: VehicleStatus.IN_SHOP },
@@ -40,6 +44,8 @@ export async function createMaintenanceLog(data: {
       include: { vehicle: true },
     });
   });
+  emitOperationsUpdate("maintenance.opened", { maintenanceId: log.id, vehicleId: log.vehicleId });
+  return log;
 }
 
 export async function closeMaintenanceLog(id: string) {
@@ -53,8 +59,11 @@ export async function closeMaintenanceLog(id: string) {
     throw new AppError(400, "Maintenance log is already closed");
   }
 
-  return prisma.$transaction(async (tx) => {
-    if (log.vehicle.status !== VehicleStatus.RETIRED) {
+  const updatedLog = await prisma.$transaction(async (tx) => {
+    const otherOpenLogs = await tx.maintenanceLog.count({
+      where: { vehicleId: log.vehicleId, status: MaintenanceStatus.OPEN, id: { not: id } },
+    });
+    if (log.vehicle.status !== VehicleStatus.RETIRED && otherOpenLogs === 0) {
       await tx.vehicle.update({
         where: { id: log.vehicleId },
         data: { status: VehicleStatus.AVAILABLE },
@@ -67,4 +76,6 @@ export async function closeMaintenanceLog(id: string) {
       include: { vehicle: true },
     });
   });
+  emitOperationsUpdate("maintenance.closed", { maintenanceId: updatedLog.id, vehicleId: updatedLog.vehicleId });
+  return updatedLog;
 }

@@ -11,12 +11,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { TRIP_STATUS_LABELS, type Trip, type TripStatus } from "@/types";
+import { useOperationsRealtime } from "@/hooks/useOperationsRealtime";
 
 const statuses: TripStatus[] = ["DRAFT", "DISPATCHED", "COMPLETED", "CANCELLED"];
 const emptyTrip: TripPayload = { source: "", destination: "", cargoWeight: 0, plannedDistance: 0, vehicleId: "", driverId: "" };
 function TripBadge({ status }: { status: TripStatus }) { const colors: Record<TripStatus, string> = { DRAFT: "bg-slate-100 text-slate-700", DISPATCHED: "bg-blue-100 text-blue-800", COMPLETED: "bg-emerald-100 text-emerald-800", CANCELLED: "bg-red-100 text-red-700" }; return <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${colors[status]}`}>{TRIP_STATUS_LABELS[status]}</span>; }
 
 export function TripsPage() {
+  useOperationsRealtime();
   const queryClient = useQueryClient(); const [showCreate, setShowCreate] = useState(false); const [statusFilter, setStatusFilter] = useState<"" | TripStatus>(""); const [completing, setCompleting] = useState<Trip | null>(null);
   const { data: trips = [], isLoading } = useQuery({ queryKey: ["trips", statusFilter], queryFn: () => getTrips(statusFilter ? { status: statusFilter } : undefined) }); const { data: vehicles = [] } = useQuery({ queryKey: ["available-vehicles"], queryFn: getAvailableVehicles, enabled: showCreate }); const { data: drivers = [] } = useQuery({ queryKey: ["available-drivers"], queryFn: getAvailableDrivers, enabled: showCreate });
   const tripForm = useForm<TripPayload>({ defaultValues: emptyTrip }); const completeForm = useForm<CompleteTripPayload>(); const refresh = () => { queryClient.invalidateQueries({ queryKey: ["trips"] }); queryClient.invalidateQueries({ queryKey: ["available-vehicles"] }); queryClient.invalidateQueries({ queryKey: ["available-drivers"] }); queryClient.invalidateQueries({ queryKey: ["dashboard-kpis"] }); };
