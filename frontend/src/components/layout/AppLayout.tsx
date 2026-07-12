@@ -1,5 +1,5 @@
 import { Outlet } from "react-router-dom";
-import { Bell, Search } from "lucide-react";
+import { Bell, Radio } from "lucide-react";
 import { Sidebar } from "./Sidebar";
 
 export function AppLayout() {
@@ -7,7 +7,10 @@ export function AppLayout() {
     <div className="flex min-h-screen bg-background">
       <Sidebar />
       <main className="min-w-0 flex-1 overflow-auto">
-        <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background/90 px-5 backdrop-blur md:px-8"><div className="relative hidden w-72 md:block"><Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" /><input className="h-9 w-full rounded-lg border bg-card pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-primary/30" placeholder="Search vehicles, drivers, trips..." /></div><div className="ml-auto flex h-9 w-9 items-center justify-center rounded-lg border bg-card text-muted-foreground"><Bell className="h-4 w-4" /></div></header>
+        <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background/90 px-5 backdrop-blur md:px-8">
+        <div className="inline-flex items-center gap-2 rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700">
+          <Radio className="h-3.5 w-3.5" /> Live Updates</div><div className="flex h-9 w-9 items-center justify-center rounded-lg border bg-card text-muted-foreground">
+            <Bell className="h-4 w-4" /></div></header>
         <div className="p-5 md:p-8"><Outlet /></div>
       </main>
     </div>
