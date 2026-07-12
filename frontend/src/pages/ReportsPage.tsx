@@ -1,19 +1,144 @@
 import { useQuery } from "@tanstack/react-query";
-import { BarChart3, Download, Fuel, IndianRupee, TrendingUp } from "lucide-react";
+import { Download } from "lucide-react";
 import toast from "react-hot-toast";
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { downloadAnalyticsCsv, getAnalyticsReport } from "@/api/reports";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useOperationsRealtime } from "@/hooks/useOperationsRealtime";
 
 export function ReportsPage() {
-  useOperationsRealtime(); const { data: report, isLoading } = useQuery({ queryKey: ["analytics"], queryFn: getAnalyticsReport });
-  async function exportCsv() { try { const csv = await downloadAnalyticsCsv(); const url = URL.createObjectURL(csv); const link = document.createElement("a"); link.href = url; link.download = "transitops-report.csv"; link.click(); URL.revokeObjectURL(url); toast.success("CSV report downloaded"); } catch (error) { toast.error(error instanceof Error ? error.message : "Unable to export report"); } }
-  const totalRevenue = report?.vehicles.reduce((sum, item) => sum + item.totalRevenue, 0) ?? 0; const averageRoi = report?.vehicles.length ? report.vehicles.reduce((sum, item) => sum + item.roi, 0) / report.vehicles.length : 0;
-  return <div className="space-y-6"><div className="flex flex-wrap items-start justify-between gap-4"><div><p className="text-sm font-medium text-primary">Performance intelligence</p><h2 className="mt-1 text-3xl font-bold tracking-tight">Reports & analytics</h2><p className="mt-1 text-muted-foreground">Cost, fuel efficiency, and return on investment across your fleet.</p></div><Button onClick={exportCsv}><Download className="h-4 w-4" /> Export CSV</Button></div>
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><Metric label="Fleet vehicles" value={report?.fleetSummary.vehicleCount ?? "—"} icon={<BarChart3 className="h-5 w-5 text-blue-600" />} /><Metric label="Avg. fuel efficiency" value={isLoading ? "—" : `${report?.fleetSummary.avgFuelEfficiency ?? 0} km/L`} icon={<Fuel className="h-5 w-5 text-emerald-600" />} /><Metric label="Operational cost" value={isLoading ? "—" : `₹${report?.fleetSummary.totalOperationalCost.toLocaleString() ?? 0}`} icon={<IndianRupee className="h-5 w-5 text-amber-600" />} /><Metric label="Average ROI" value={isLoading ? "—" : `${(averageRoi * 100).toFixed(1)}%`} icon={<TrendingUp className="h-5 w-5 text-violet-600" />} /></div>
-    <div className="grid gap-4 lg:grid-cols-2"><Card><CardContent className="pt-6"><div className="mb-5"><h3 className="font-semibold">Operational cost by vehicle</h3><p className="mt-1 text-sm text-muted-foreground">Fuel, maintenance, and recorded expenses</p></div><div className="h-72">{report?.vehicles.length ? <ResponsiveContainer width="100%" height="100%"><BarChart data={report.vehicles}><CartesianGrid vertical={false} strokeDasharray="3 3" /><XAxis dataKey="name" tickLine={false} axisLine={false} /><YAxis tickLine={false} axisLine={false} /><Tooltip formatter={(value) => `₹${Number(value).toLocaleString()}`} /><Bar dataKey="operationalCost" fill="#2563eb" radius={[6, 6, 0, 0]} /></BarChart></ResponsiveContainer> : <Empty />}</div></CardContent></Card><Card><CardContent className="pt-6"><div className="mb-5"><h3 className="font-semibold">Fuel efficiency by vehicle</h3><p className="mt-1 text-sm text-muted-foreground">Completed-trip distance divided by fuel consumed</p></div><div className="h-72">{report?.vehicles.length ? <ResponsiveContainer width="100%" height="100%"><BarChart data={report.vehicles}><CartesianGrid vertical={false} strokeDasharray="3 3" /><XAxis dataKey="name" tickLine={false} axisLine={false} /><YAxis tickLine={false} axisLine={false} /><Tooltip formatter={(value) => `${Number(value)} km/L`} /><Bar dataKey="fuelEfficiency" fill="#059669" radius={[6, 6, 0, 0]} /></BarChart></ResponsiveContainer> : <Empty />}</div></CardContent></Card></div>
-    <Card><CardContent className="pt-6"><div className="mb-5 flex justify-between"><div><h3 className="font-semibold">Vehicle performance</h3><p className="mt-1 text-sm text-muted-foreground">Total fleet revenue: ₹{totalRevenue.toLocaleString()}</p></div></div><div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead className="border-b text-muted-foreground"><tr><th className="p-3">Vehicle</th><th className="p-3">Distance</th><th className="p-3">Fuel efficiency</th><th className="p-3">Operational cost</th><th className="p-3">Revenue</th><th className="p-3">ROI</th></tr></thead><tbody>{isLoading ? <tr><td colSpan={6} className="p-6 text-center text-muted-foreground">Loading analytics...</td></tr> : report?.vehicles.length ? report.vehicles.map((vehicle) => <tr className="border-b last:border-0" key={vehicle.vehicleId}><td className="p-3"><p className="font-medium">{vehicle.name}</p><p className="text-xs text-muted-foreground">{vehicle.registrationNumber}</p></td><td className="p-3">{vehicle.totalDistance.toLocaleString()} km</td><td className="p-3">{vehicle.fuelEfficiency} km/L</td><td className="p-3">₹{vehicle.operationalCost.toLocaleString()}</td><td className="p-3">₹{vehicle.totalRevenue.toLocaleString()}</td><td className="p-3"><span className={vehicle.roi >= 0 ? "font-medium text-emerald-700" : "font-medium text-red-700"}>{(vehicle.roi * 100).toFixed(1)}%</span></td></tr>) : <tr><td colSpan={6} className="p-6 text-center text-muted-foreground">Complete trips and record costs to see analytics.</td></tr>}</tbody></table></div></CardContent></Card></div>;
+  useOperationsRealtime(); 
+  const { data: report, isLoading } = useQuery({ queryKey: ["analytics"], queryFn: getAnalyticsReport });
+  
+  async function exportCsv() { 
+    try { 
+      const csv = await downloadAnalyticsCsv(); 
+      const url = URL.createObjectURL(csv); 
+      const link = document.createElement("a"); 
+      link.href = url; 
+      link.download = "transitops-report.csv"; 
+      link.click(); 
+      URL.revokeObjectURL(url); 
+      toast.success("CSV report downloaded"); 
+    } catch (error) { 
+      toast.error(error instanceof Error ? error.message : "Unable to export report"); 
+    } 
+  }
+  
+  const totalRevenue = report?.vehicles.reduce((sum, item) => sum + item.totalRevenue, 0) ?? 0; 
+  const totalCost = report?.fleetSummary.totalOperationalCost ?? 0;
+  
+  const averageRoi = report?.vehicles.length ? report.vehicles.reduce((sum, item) => sum + item.roi, 0) / report.vehicles.length : 0;
+  const overallRoi = totalCost > 0 ? (totalRevenue - totalCost) / totalCost : 0;
+
+  // Sort vehicles by cost for the "TOP CONSUMER VEHICLES" chart
+  const costSortedVehicles = report?.vehicles ? [...report.vehicles].sort((a, b) => b.operationalCost - a.operationalCost).slice(0, 3) : [];
+  
+  const customColors = ["#ef4444", "#f97316", "#334155"]; // Red, Orange, Slate
+
+  return (
+    <div className="space-y-8">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="text-3xl font-bold tracking-tight">7. Reports & Analytics</h1>
+        <Button onClick={exportCsv} className="bg-blue-500 hover:bg-blue-600 text-white rounded-full px-6 shadow-md transition-colors" size="lg">
+          Export CSV
+        </Button>
+      </div>
+
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <Card className="border-l-4 border-l-blue-500 shadow-sm">
+          <CardContent className="p-6">
+            <p className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-2">AVG. FUEL EFFICIENCY</p>
+            <p className="text-3xl font-bold">{isLoading ? "—" : `${report?.fleetSummary.avgFuelEfficiency ?? 0} km/L`}</p>
+          </CardContent>
+        </Card>
+        
+        <Card className="border-l-4 border-l-emerald-500 shadow-sm">
+          <CardContent className="p-6">
+            <p className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-2">FLEET'S OPERATIONAL ROI</p>
+            <p className="text-3xl font-bold">{isLoading ? "—" : `${(averageRoi * 100).toFixed(1)}%`}</p>
+          </CardContent>
+        </Card>
+        
+        <Card className="border-l-4 border-l-orange-500 shadow-sm">
+          <CardContent className="p-6">
+            <p className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-2">TOTAL OPERATIONAL COST</p>
+            <p className="text-3xl font-bold">{isLoading ? "—" : `₹${totalCost.toLocaleString()}`}</p>
+          </CardContent>
+        </Card>
+        
+        <Card className="border-l-4 border-l-slate-700 shadow-sm">
+          <CardContent className="p-6">
+            <p className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-2">OVERALL ROI</p>
+            <p className="text-3xl font-bold">{isLoading ? "—" : `${(overallRoi * 100).toFixed(1)}%`}</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="text-sm font-medium text-muted-foreground">
+        ROI = (Revenue - Total Operational Cost) / Total Operational Cost
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <div className="space-y-4">
+          <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">REVENUE BY VEHICLE</h2>
+          <Card className="shadow-sm border-muted">
+            <CardContent className="pt-6">
+              <div className="h-[300px]">
+                {report?.vehicles.length ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={report.vehicles} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
+                      <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#e2e8f0" />
+                      <XAxis dataKey="name" tickLine={false} axisLine={false} tick={{ fontSize: 12, fill: "#64748b" }} dy={10} />
+                      <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 12, fill: "#64748b" }} tickFormatter={(value) => `₹${value / 1000}k`} />
+                      <Tooltip cursor={{ fill: '#f1f5f9' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} formatter={(value) => [`₹${Number(value).toLocaleString()}`, 'Revenue']} />
+                      <Bar dataKey="totalRevenue" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={40} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <Empty />
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="space-y-4">
+          <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">TOP CONSUMING VEHICLES</h2>
+          <Card className="shadow-sm border-muted">
+            <CardContent className="pt-6">
+              <div className="h-[300px]">
+                {costSortedVehicles.length ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={costSortedVehicles} layout="vertical" margin={{ top: 10, right: 30, left: 10, bottom: 20 }}>
+                      <CartesianGrid horizontal={false} strokeDasharray="3 3" stroke="#e2e8f0" />
+                      <XAxis type="number" tickLine={false} axisLine={false} tick={{ fontSize: 12, fill: "#64748b" }} tickFormatter={(value) => `₹${value / 1000}k`} />
+                      <YAxis type="category" dataKey="name" tickLine={false} axisLine={false} tick={{ fontSize: 12, fill: "#1e293b", fontWeight: 500 }} dx={-10} width={80} />
+                      <Tooltip cursor={{ fill: '#f1f5f9' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} formatter={(value) => [`₹${Number(value).toLocaleString()}`, 'Cost']} />
+                      <Bar dataKey="operationalCost" radius={[0, 4, 4, 0]} barSize={24}>
+                        {costSortedVehicles.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={customColors[index % customColors.length]} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <Empty />
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
 }
-function Metric({ label, value, icon }: { label: string; value: string | number; icon: React.ReactNode }) { return <Card><CardContent className="flex items-center justify-between p-5"><div><p className="text-sm text-muted-foreground">{label}</p><p className="mt-1 text-2xl font-bold">{value}</p></div>{icon}</CardContent></Card>; } function Empty() { return <div className="flex h-full items-center justify-center text-sm text-muted-foreground">No completed-trip data yet.</div>; }
+
+function Empty() { 
+  return (
+    <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+      No completed-trip data yet.
+    </div>
+  ); 
+}

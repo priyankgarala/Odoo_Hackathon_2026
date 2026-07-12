@@ -11,6 +11,7 @@ import { MaintenancePage } from "@/pages/MaintenancePage";
 import { FuelExpensesPage } from "@/pages/FuelExpensesPage";
 import { ReportsPage } from "@/pages/ReportsPage";
 import { DriverPortalPage } from "@/pages/DriverPortalPage";
+import { SettingsPage } from "@/pages/SettingsPage";
 
 export function AppRoutes() {
   return (
@@ -68,6 +69,14 @@ export function AppRoutes() {
             element={
               <RoleGuard roles={["FINANCIAL_ANALYST", "FLEET_MANAGER"]}>
                 <ReportsPage />
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="settings"
+            element={
+              <RoleGuard roles={["FLEET_MANAGER"]}>
+                <SettingsPage />
               </RoleGuard>
             }
           />

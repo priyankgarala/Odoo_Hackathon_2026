@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   LogOut,
   Route,
+  Settings,
   Users,
   Wrench,
 } from "lucide-react";
@@ -24,6 +25,7 @@ const navItems = [
   { to: "/maintenance", label: "Maintenance", icon: Wrench, roles: ["FLEET_MANAGER"] as const },
   { to: "/fuel-expenses", label: "Fuel & Expenses", icon: Fuel, roles: ["FINANCIAL_ANALYST", "FLEET_MANAGER"] as const },
   { to: "/reports", label: "Reports", icon: BarChart3, roles: ["FINANCIAL_ANALYST", "FLEET_MANAGER"] as const },
+  { to: "/settings", label: "Settings", icon: Settings, roles: ["FLEET_MANAGER"] as const },
 ];
 
 export function Sidebar() {

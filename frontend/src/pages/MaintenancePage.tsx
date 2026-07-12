@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, Plus, Wrench, X } from "lucide-react";
+import { ArrowRight, CheckCircle2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { createMaintenanceLog, closeMaintenanceLog, getMaintenanceLogs, type MaintenancePayload } from "@/api/maintenance";
 import { getVehicles } from "@/api/vehicles";
@@ -12,17 +12,179 @@ import { Label } from "@/components/ui/label";
 import { useOperationsRealtime } from "@/hooks/useOperationsRealtime";
 
 const emptyLog: MaintenancePayload = { vehicleId: "", description: "", cost: 0, date: new Date().toISOString().slice(0, 10) };
+
 export function MaintenancePage() {
   useOperationsRealtime();
-  const queryClient = useQueryClient(); const [showForm, setShowForm] = useState(false); const form = useForm<MaintenancePayload>({ defaultValues: emptyLog });
-  const { data: logs = [], isLoading } = useQuery({ queryKey: ["maintenance"], queryFn: () => getMaintenanceLogs() }); const { data: vehicles = [] } = useQuery({ queryKey: ["maintenance-vehicles"], queryFn: () => getVehicles() });
-  const refresh = () => { queryClient.invalidateQueries({ queryKey: ["maintenance"] }); queryClient.invalidateQueries({ queryKey: ["vehicles"] }); queryClient.invalidateQueries({ queryKey: ["maintenance-vehicles"] }); queryClient.invalidateQueries({ queryKey: ["dashboard-kpis"] }); };
-  const create = useMutation({ mutationFn: createMaintenanceLog, onSuccess: () => { toast.success("Maintenance log opened; vehicle is now in shop"); setShowForm(false); form.reset(emptyLog); refresh(); }, onError: (e) => toast.error(e instanceof Error ? e.message : "Unable to open maintenance log") }); const close = useMutation({ mutationFn: closeMaintenanceLog, onSuccess: () => { toast.success("Maintenance log closed"); refresh(); }, onError: (e) => toast.error(e instanceof Error ? e.message : "Unable to close maintenance log") });
+  const queryClient = useQueryClient();
+  const form = useForm<MaintenancePayload>({ defaultValues: emptyLog });
+  
+  const { data: logs = [], isLoading } = useQuery({ queryKey: ["maintenance"], queryFn: () => getMaintenanceLogs() });
+  const { data: vehicles = [] } = useQuery({ queryKey: ["maintenance-vehicles"], queryFn: () => getVehicles() });
+  
+  const refresh = () => { 
+    queryClient.invalidateQueries({ queryKey: ["maintenance"] }); 
+    queryClient.invalidateQueries({ queryKey: ["vehicles"] }); 
+    queryClient.invalidateQueries({ queryKey: ["maintenance-vehicles"] }); 
+    queryClient.invalidateQueries({ queryKey: ["dashboard-kpis"] }); 
+  };
+  
+  const create = useMutation({ 
+    mutationFn: createMaintenanceLog, 
+    onSuccess: () => { 
+      toast.success("Maintenance log opened; vehicle is now in shop"); 
+      form.reset(emptyLog); 
+      refresh(); 
+    }, 
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Unable to open maintenance log") 
+  });
+  
+  const close = useMutation({ 
+    mutationFn: closeMaintenanceLog, 
+    onSuccess: () => { 
+      toast.success("Maintenance log closed"); 
+      refresh(); 
+    }, 
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Unable to close maintenance log") 
+  });
+  
   const maintenanceEligible = vehicles.filter((vehicle) => vehicle.status !== "RETIRED" && vehicle.status !== "ON_TRIP");
-  return <div className="space-y-6"><div className="flex flex-wrap items-start justify-between gap-4"><div><p className="text-sm font-medium text-primary">Fleet care</p><h2 className="mt-1 text-3xl font-bold tracking-tight">Maintenance</h2><p className="mt-1 text-muted-foreground">Log repairs, protect dispatch availability, and track workshop costs.</p></div><Button onClick={() => setShowForm(true)}><Plus className="h-4 w-4" /> Log maintenance</Button></div>
-    {showForm && <Card><CardContent className="pt-6"><div className="mb-5 flex items-center justify-between"><div><h3 className="font-semibold">New maintenance log</h3><p className="text-sm text-muted-foreground">Opening a log immediately moves the vehicle into the shop.</p></div><Button size="sm" variant="ghost" onClick={() => setShowForm(false)}><X className="h-4 w-4" /></Button></div><form className="grid gap-4 md:grid-cols-2 lg:grid-cols-3" onSubmit={form.handleSubmit((data) => create.mutate({ ...data, cost: Number(data.cost) }))}><Field label="Vehicle" error={form.formState.errors.vehicleId?.message}><select className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" {...form.register("vehicleId", { required: "Select a vehicle" })}><option value="">Select vehicle</option>{maintenanceEligible.map((vehicle) => <option key={vehicle.id} value={vehicle.id}>{vehicle.name} · {vehicle.registrationNumber} ({vehicle.status === "IN_SHOP" ? "in shop" : "available"})</option>)}</select></Field><Field label="Work description" error={form.formState.errors.description?.message}><Input placeholder="Oil change and brake inspection" {...form.register("description", { required: "Required" })} /></Field><Field label="Cost"><Input type="number" min="0" {...form.register("cost", { min: 0 })} /></Field><Field label="Maintenance date"><Input type="date" {...form.register("date")} /></Field><div className="flex items-end gap-3"><Button type="submit" disabled={create.isPending}>{create.isPending ? "Opening..." : "Open maintenance log"}</Button><Button type="button" variant="outline" onClick={() => setShowForm(false)}>Cancel</Button></div></form></CardContent></Card>}
-    <div className="grid gap-4 sm:grid-cols-3"><Metric label="Open work orders" value={logs.filter((log) => log.status === "OPEN").length} /><Metric label="Completed work orders" value={logs.filter((log) => log.status === "CLOSED").length} /><Metric label="Maintenance cost" value={`₹${logs.reduce((sum, log) => sum + log.cost, 0).toLocaleString()}`} /></div>
-    <Card><CardContent className="pt-6"><div className="mb-5"><h3 className="font-semibold">Maintenance log</h3><p className="mt-1 text-sm text-muted-foreground">Vehicles with an open work order are excluded from dispatch.</p></div><div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead className="border-b text-muted-foreground"><tr><th className="p-3">Vehicle</th><th className="p-3">Work order</th><th className="p-3">Date</th><th className="p-3">Cost</th><th className="p-3">Status</th><th className="p-3 text-right">Action</th></tr></thead><tbody>{isLoading ? <tr><td colSpan={6} className="p-6 text-center text-muted-foreground">Loading maintenance logs...</td></tr> : logs.length === 0 ? <tr><td colSpan={6} className="p-6 text-center text-muted-foreground">No maintenance logs yet.</td></tr> : logs.map((log) => <tr key={log.id} className="border-b last:border-0"><td className="p-3"><p className="font-medium">{log.vehicle.name}</p><p className="text-xs text-muted-foreground">{log.vehicle.registrationNumber}</p></td><td className="p-3"><span className="flex items-center gap-2"><Wrench className="h-4 w-4 text-amber-500" />{log.description}</span></td><td className="p-3">{new Date(log.date).toLocaleDateString()}</td><td className="p-3">₹{log.cost.toLocaleString()}</td><td className="p-3"><span className={`rounded-full px-2.5 py-1 text-xs font-medium ${log.status === "OPEN" ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800"}`}>{log.status === "OPEN" ? "Open" : "Closed"}</span></td><td className="p-3 text-right">{log.status === "OPEN" && <Button size="sm" variant="secondary" disabled={close.isPending} onClick={() => close.mutate(log.id)}><CheckCircle2 className="h-3.5 w-3.5" /> Close</Button>}</td></tr>)}</tbody></table></div></CardContent></Card></div>;
+
+  return (
+    <div className="space-y-6">
+      <h1 className="text-3xl font-bold tracking-tight">5. Maintenance</h1>
+      
+      <div className="grid gap-8 lg:grid-cols-[400px_1fr]">
+        
+        {/* Left Column: LOG SERVICE RECORD */}
+        <div className="space-y-6">
+          <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">LOG SERVICE RECORD</h2>
+          
+          <form className="space-y-4" onSubmit={form.handleSubmit((data) => create.mutate({ ...data, cost: Number(data.cost) }))}>
+            <Field label="VEHICLE" error={form.formState.errors.vehicleId?.message}>
+              <select className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" {...form.register("vehicleId", { required: "Select a vehicle" })}>
+                <option value="">Select vehicle...</option>
+                {maintenanceEligible.map((vehicle) => (
+                  <option key={vehicle.id} value={vehicle.id}>
+                    {vehicle.name} · {vehicle.registrationNumber} ({vehicle.status === "IN_SHOP" ? "in shop" : "available"})
+                  </option>
+                ))}
+              </select>
+            </Field>
+            
+            <Field label="SERVICE TYPE" error={form.formState.errors.description?.message}>
+              <Input className="h-11" placeholder="Oil Change, Engine Repair..." {...form.register("description", { required: "Required" })} />
+            </Field>
+            
+            <Field label="COST">
+              <Input className="h-11" type="number" min="0" placeholder="0" {...form.register("cost", { min: 0 })} />
+            </Field>
+            
+            <Field label="DATE">
+              <Input className="h-11" type="date" {...form.register("date")} />
+            </Field>
+
+            <Field label="STATUS">
+              <Input className="h-11 bg-muted/50 text-muted-foreground font-medium" value="Active" readOnly disabled />
+            </Field>
+            
+            <Button type="submit" disabled={create.isPending} className="w-full bg-orange-500 hover:bg-orange-600 text-white h-12 text-base font-semibold transition-colors mt-2">
+              {create.isPending ? "Saving..." : "Save"}
+            </Button>
+          </form>
+
+          <div className="pt-6 space-y-4">
+            <div className="space-y-3">
+              <div className="flex items-center gap-4 text-sm font-semibold text-emerald-600 dark:text-emerald-500">
+                <span className="w-20">Available</span>
+                <div className="flex-1 flex items-center">
+                  <div className="h-px bg-current flex-1"></div>
+                  <ArrowRight className="h-4 w-4 -ml-1" />
+                </div>
+                <span className="w-20 text-orange-600 dark:text-orange-400">In Shop</span>
+              </div>
+              <div className="flex items-center gap-4 text-sm font-semibold text-orange-600 dark:text-orange-400">
+                <span className="w-20">In Shop</span>
+                <div className="flex-1 flex items-center">
+                  <div className="h-px bg-current flex-1"></div>
+                  <ArrowRight className="h-4 w-4 -ml-1" />
+                </div>
+                <span className="w-20 text-emerald-600 dark:text-emerald-500">Available</span>
+              </div>
+            </div>
+            <p className="text-sm font-medium text-orange-600 dark:text-orange-400 pt-2">
+              Note: In Shop vehicles are removed from the dispatch pool.
+            </p>
+          </div>
+        </div>
+
+        {/* Right Column: SERVICE LOG */}
+        <div className="space-y-6">
+          <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">SERVICE LOG</h2>
+          
+          <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm whitespace-nowrap">
+                <thead className="border-b bg-muted/30">
+                  <tr className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+                    <th className="p-4 pl-6">VEHICLE</th>
+                    <th className="p-4">SERVICE</th>
+                    <th className="p-4 text-right">COST</th>
+                    <th className="p-4 pl-8">STATUS</th>
+                    <th className="p-4 pr-6 text-right">ACTION</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {isLoading ? (
+                    <tr>
+                      <td colSpan={5} className="p-8 text-center text-muted-foreground text-base">Loading service logs...</td>
+                    </tr>
+                  ) : logs.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="p-8 text-center text-muted-foreground text-base">No maintenance logs yet.</td>
+                    </tr>
+                  ) : (
+                    logs.map((log) => (
+                      <tr key={log.id} className="hover:bg-muted/30 transition-colors">
+                        <td className="p-4 pl-6 font-medium text-base">
+                          {log.vehicle.registrationNumber || log.vehicle.name}
+                        </td>
+                        <td className="p-4 text-muted-foreground">{log.description}</td>
+                        <td className="p-4 text-right font-medium">
+                          {log.cost.toLocaleString()}
+                        </td>
+                        <td className="p-4 pl-8">
+                          <span className={`inline-flex items-center justify-center rounded-md px-3 py-1 text-xs font-semibold shadow-sm transition-colors cursor-default ${
+                            log.status === "OPEN" ? "bg-orange-500 hover:bg-orange-600 text-white" : "bg-emerald-500 hover:bg-emerald-600 text-white"
+                          }`}>
+                            {log.status === "OPEN" ? "In Shop" : "Completed"}
+                          </span>
+                        </td>
+                        <td className="p-4 pr-6 text-right">
+                          {log.status === "OPEN" && (
+                            <Button size="sm" variant="ghost" className="h-8 hover:bg-emerald-500/10 hover:text-emerald-600" disabled={close.isPending} onClick={() => close.mutate(log.id)}>
+                              <CheckCircle2 className="h-4 w-4 mr-1" /> Close
+                            </Button>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
-function Metric({ label, value }: { label: string; value: string | number }) { return <Card><CardContent className="flex items-center justify-between p-5"><p className="text-sm text-muted-foreground">{label}</p><p className="text-2xl font-bold">{value}</p></CardContent></Card>; }
-function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) { return <div className="space-y-2"><Label>{label}</Label>{children}{error && <p className="text-xs text-destructive">{error}</p>}</div>; }
+
+function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) { 
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{label}</Label>
+      {children}
+      {error && <p className="text-xs font-medium text-destructive">{error}</p>}
+    </div>
+  ); 
+}
