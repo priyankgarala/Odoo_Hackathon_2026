@@ -1,6 +1,7 @@
 import { ExpenseType } from "@prisma/client";
 import { prisma } from "../lib/prisma.js";
 import { getVehicleById } from "./vehicle.service.js";
+import { emitOperationsUpdate } from "../lib/socket.js";
 
 export async function listExpenses(vehicleId?: string) {
   return prisma.expense.findMany({
@@ -19,7 +20,7 @@ export async function createExpense(data: {
 }) {
   await getVehicleById(data.vehicleId);
 
-  return prisma.expense.create({
+  const expense = await prisma.expense.create({
     data: {
       vehicleId: data.vehicleId,
       type: data.type,
@@ -29,6 +30,8 @@ export async function createExpense(data: {
     },
     include: { vehicle: true },
   });
+  emitOperationsUpdate("expense.logged", { expenseId: expense.id, vehicleId: expense.vehicleId });
+  return expense;
 }
 
 export async function getVehicleOperationalCost(vehicleId: string) {

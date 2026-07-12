@@ -101,6 +101,10 @@ export interface MaintenanceLog {
   vehicle: Vehicle;
 }
 
+export type ExpenseType = "TOLL" | "MAINTENANCE" | "OTHER";
+export interface FuelLog { id: string; vehicleId: string; liters: number; cost: number; date: string; vehicle: Vehicle; }
+export interface Expense { id: string; vehicleId: string; type: ExpenseType; amount: number; date: string; description: string | null; vehicle: Vehicle; }
+
 export const ROLE_LABELS: Record<Role, string> = {
   FLEET_MANAGER: "Fleet Manager",
   DRIVER: "Driver",

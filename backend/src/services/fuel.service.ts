@@ -1,5 +1,6 @@
 import { prisma } from "../lib/prisma.js";
 import { getVehicleById } from "./vehicle.service.js";
+import { emitOperationsUpdate } from "../lib/socket.js";
 
 export async function listFuelLogs(vehicleId?: string) {
   return prisma.fuelLog.findMany({
@@ -18,7 +19,7 @@ export async function createFuelLog(data: {
 }) {
   await getVehicleById(data.vehicleId);
 
-  return prisma.fuelLog.create({
+  const log = await prisma.fuelLog.create({
     data: {
       vehicleId: data.vehicleId,
       liters: data.liters,
@@ -28,4 +29,6 @@ export async function createFuelLog(data: {
     },
     include: { vehicle: true },
   });
+  emitOperationsUpdate("fuel.logged", { fuelLogId: log.id, vehicleId: log.vehicleId });
+  return log;
 }
